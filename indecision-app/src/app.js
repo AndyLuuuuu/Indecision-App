@@ -1,4 +1,23 @@
 class IndecisionApp extends React.Component {
+
+// ========== FOR SELF REFERENCE ==========
+
+//  ***constructor(props)***
+//  If you want to use this.props in the constructor, 
+//  you need to pass props to super. Otherwise, it 
+//  doesn’t matter because React sets .props on the 
+//  instance from the outside immediately after calling 
+//  the constructor.
+
+//  React sets this.props anyway after the constructor runs. 
+//  Still, it is confusing to have this.props work in some 
+//  places and not others. Especially if both constructor and 
+//  other methods call some shared method that reads this.props. 
+//  So, to avoid any potential confusion, we recommend always 
+//  calling ***super(props)***.
+
+// ========================================
+
   constructor(props) {
     super(props);
     this.handleDeleteOptions = this.handleDeleteOptions.bind(this);
@@ -6,16 +25,28 @@ class IndecisionApp extends React.Component {
     this.handleAddOption = this.handleAddOption.bind(this);
     this.handleDeleteOption = this.handleDeleteOption.bind(this);
     this.state = {
-      options: props.options
+      options: []
     };
   }
   
   componentDidMount() {
-    console.log("fetching data");
+    try {
+      const json = localStorage.getItem('options');
+      const options = JSON.parse(json);
+
+      if (options) {
+        this.setState(() => ({options:options}))
+    }
+    } catch (e) {
+      // Do nothing at all
+    }
   }
 
   componentDidUpdate(prevProp, prevState) {
-    console.log("saving data")
+    if (prevState.options.length !== this.state.options.length) {
+      const json = JSON.stringify(this.state.options);
+      localStorage.setItem('options', json);
+    }
   }
 
   componentWillUnmount() {
@@ -64,9 +95,6 @@ class IndecisionApp extends React.Component {
   }
 }
 
-IndecisionApp.defaultProps = {
-  options: []
-}
 const Header = (props) => {
   return (
     <div>
@@ -96,6 +124,7 @@ const Options = (props) => {
   return (
     <div>
     <button onClick={props.handleDeleteOptions}>Remove All</button>
+    {props.options.length === 0 && <p>Please add an option to get started!</p>}
     {
       props.options.map((option) => (
         <Option 
@@ -135,8 +164,11 @@ class AddOption extends React.Component {
     const option = e.target.elements.option.value.trim();
     const error = this.props.handleAddOption(option);
     
-    this.setState(() => ({error: error})
-    )
+    this.setState(() => ({error: error}));
+
+    if (!error) {
+      e.target.elements.option.value = "";
+    }
   }
   render() {
     return (
